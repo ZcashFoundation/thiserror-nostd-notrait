@@ -1,7 +1,9 @@
+#![cfg(feature = "std")]
+
 use ref_cast::RefCast;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[derive(Error, Debug)]
 #[error("failed to read '{file}'")]

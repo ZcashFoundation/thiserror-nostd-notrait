@@ -1,7 +1,8 @@
 use anyhow::anyhow;
+#[cfg(feature = "std")]
 use std::error::Error as _;
 use std::io;
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[test]
 fn test_transparent_struct() {
@@ -19,11 +20,13 @@ fn test_transparent_struct() {
 
     let error = Error(ErrorKind::E0);
     assert_eq!("E0", error.to_string());
+    #[cfg(feature = "std")]
     assert!(error.source().is_none());
 
     let io = io::Error::new(io::ErrorKind::Other, "oh no!");
     let error = Error(ErrorKind::from(io));
     assert_eq!("E1", error.to_string());
+    #[cfg(feature = "std")]
     error.source().unwrap().downcast_ref::<io::Error>().unwrap();
 }
 
@@ -42,6 +45,7 @@ fn test_transparent_enum() {
 
     let error = Error::Other(anyhow!("inner").context("outer"));
     assert_eq!("outer", error.to_string());
+    #[cfg(feature = "std")]
     assert_eq!("inner", error.source().unwrap().to_string());
 }
 
@@ -53,6 +57,7 @@ fn test_anyhow() {
 
     let error = Any::from(anyhow!("inner").context("outer"));
     assert_eq!("outer", error.to_string());
+    #[cfg(feature = "std")]
     assert_eq!("inner", error.source().unwrap().to_string());
 }
 
@@ -74,5 +79,6 @@ fn test_non_static() {
         inner: ErrorKind::Unexpected { token: "error" },
     };
     assert_eq!("unexpected token: \"error\"", error.to_string());
+    #[cfg(feature = "std")]
     assert!(error.source().is_none());
 }

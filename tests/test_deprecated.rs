@@ -1,6 +1,6 @@
 #![deny(deprecated, clippy::all, clippy::pedantic)]
 
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {

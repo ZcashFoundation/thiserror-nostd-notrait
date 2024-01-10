@@ -1,11 +1,11 @@
 [package]
-name = "thiserror-impl"
-version = "1.0.56"
+name = "thiserror-nostd-notrait-impl"
+version = "1.0.57"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
-description = "Implementation detail of the `thiserror` crate"
+description = "Implementation detail of the `thiserror-nostd-notrait` crate"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/dtolnay/thiserror"
+repository = "https://github.com/ZcashFoundation/thiserror-nostd-notrait"
 rust-version = "1.56"
 
 [lib]
@@ -19,3 +19,7 @@ syn = "2.0.46"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 rustdoc-args = ["--generate-link-to-definition"]
+
+[features]
+default = ["std"]
+std = []
