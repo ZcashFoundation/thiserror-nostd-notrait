@@ -17,7 +17,7 @@
 //!
 //! ```rust
 //! # use std::io;
-//! use thiserror::Error;
+//! use thiserror_nostd_notrait::Error;
 //!
 //! #[derive(Error, Debug)]
 //! pub enum DataStoreError {
@@ -63,7 +63,7 @@
 //!
 //!   ```rust
 //!   # use std::i32;
-//!   # use thiserror::Error;
+//!   # use thiserror_nostd_notrait::Error;
 //!   #
 //!   #[derive(Error, Debug)]
 //!   pub enum Error {
@@ -77,7 +77,7 @@
 //!   as `.0`.
 //!
 //!   ```rust
-//!   # use thiserror::Error;
+//!   # use thiserror_nostd_notrait::Error;
 //!   #
 //!   # fn first_char(s: &String) -> char {
 //!   #     s.chars().next().unwrap()
@@ -130,7 +130,7 @@
 //!
 //!   ```rust
 //!   # use std::fmt::{self, Display};
-//!   # use thiserror::Error;
+//!   # use thiserror_nostd_notrait::Error;
 //!   #
 //!   #[derive(Error, Debug)]
 //!   pub struct MyError {
@@ -185,7 +185,7 @@
 //!   "anything else" variant.
 //!
 //!   ```
-//!   # use thiserror::Error;
+//!   # use thiserror_nostd_notrait::Error;
 //!   #
 //!   #[derive(Error, Debug)]
 //!   pub enum MyError {
@@ -203,7 +203,7 @@
 //!   able to evolve without breaking the crate's public API.
 //!
 //!   ```
-//!   # use thiserror::Error;
+//!   # use thiserror_nostd_notrait::Error;
 //!   #
 //!   // PublicError is public, but opaque and easy to keep compatible.
 //!   #[derive(Error, Debug)]
@@ -229,6 +229,7 @@
 //!   [`anyhow`]: https://github.com/dtolnay/anyhow
 
 #![doc(html_root_url = "https://docs.rs/thiserror/1.0.56")]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(
     clippy::module_name_repetitions,
     clippy::needless_lifetimes,
@@ -237,12 +238,11 @@
 )]
 #![cfg_attr(error_generic_member_access, feature(error_generic_member_access))]
 
-#[cfg(all(thiserror_nightly_testing, not(error_generic_member_access)))]
-compile_error!("Build script probe failed to compile.");
-
+#[cfg(feature = "std")]
 mod aserror;
 mod display;
 #[cfg(error_generic_member_access)]
+#[cfg(feature = "std")]
 mod provide;
 
 pub use thiserror_impl::*;
@@ -251,10 +251,12 @@ pub use thiserror_impl::*;
 #[doc(hidden)]
 pub mod __private {
     #[doc(hidden)]
+    #[cfg(feature = "std")]
     pub use crate::aserror::AsDynError;
     #[doc(hidden)]
     pub use crate::display::AsDisplay;
     #[cfg(error_generic_member_access)]
     #[doc(hidden)]
+    #[cfg(feature = "std")]
     pub use crate::provide::ThiserrorProvide;
 }

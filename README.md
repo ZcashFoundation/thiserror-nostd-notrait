@@ -11,9 +11,16 @@ This library provides a convenient derive macro for the standard library's
 
 [`std::error::Error`]: https://doc.rust-lang.org/std/error/trait.Error.html
 
+This fork supports `no_std` by not deriving `Error` if `std` is not enabled.
+This is useful if your library uses `thiserror` features like deriving `Display`
+implementations, deriving errors from others and so on, but not the `Error`
+trait itself. If you can be restricted to nightly Rust, use
+[`https://crates.io/crates/thiserror-no-std`].
+
+
 ```toml
 [dependencies]
-thiserror = "1.0"
+thiserror = { version = "1.0", package = "thiserror-nostd-notrait" }
 ```
 
 *Compiler support: requires rustc 1.56+*
@@ -23,7 +30,7 @@ thiserror = "1.0"
 ## Example
 
 ```rust
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[derive(Error, Debug)]
 pub enum DataStoreError {

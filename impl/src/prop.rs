@@ -1,13 +1,18 @@
 use crate::ast::{Enum, Field, Struct, Variant};
+#[cfg(feature = "std")]
 use crate::span::MemberSpan;
+#[cfg(feature = "std")]
 use proc_macro2::Span;
-use syn::{Member, Type};
+#[cfg(feature = "std")]
+use syn::Member;
+use syn::Type;
 
 impl Struct<'_> {
     pub(crate) fn from_field(&self) -> Option<&Field> {
         from_field(&self.fields)
     }
 
+    #[cfg(feature = "std")]
     pub(crate) fn source_field(&self) -> Option<&Field> {
         source_field(&self.fields)
     }
@@ -23,12 +28,14 @@ impl Struct<'_> {
 }
 
 impl Enum<'_> {
+    #[cfg(feature = "std")]
     pub(crate) fn has_source(&self) -> bool {
         self.variants
             .iter()
             .any(|variant| variant.source_field().is_some() || variant.attrs.transparent.is_some())
     }
 
+    #[cfg(feature = "std")]
     pub(crate) fn has_backtrace(&self) -> bool {
         self.variants
             .iter()
@@ -54,6 +61,7 @@ impl Variant<'_> {
         from_field(&self.fields)
     }
 
+    #[cfg(feature = "std")]
     pub(crate) fn source_field(&self) -> Option<&Field> {
         source_field(&self.fields)
     }
@@ -73,6 +81,7 @@ impl Field<'_> {
         type_is_backtrace(self.ty)
     }
 
+    #[cfg(feature = "std")]
     pub(crate) fn source_span(&self) -> Span {
         if let Some(source_attr) = &self.attrs.source {
             source_attr.path().get_ident().unwrap().span()
@@ -93,6 +102,7 @@ fn from_field<'a, 'b>(fields: &'a [Field<'b>]) -> Option<&'a Field<'b>> {
     None
 }
 
+#[cfg(feature = "std")]
 fn source_field<'a, 'b>(fields: &'a [Field<'b>]) -> Option<&'a Field<'b>> {
     for field in fields {
         if field.attrs.from.is_some() || field.attrs.source.is_some() {
