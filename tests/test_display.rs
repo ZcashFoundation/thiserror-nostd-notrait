@@ -1,7 +1,7 @@
 #![allow(clippy::needless_raw_string_hashes, clippy::uninlined_format_args)]
 
 use std::fmt::{self, Display};
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 fn assert<T: Display>(expected: &str, value: T) {
     assert_eq!(expected, value.to_string());

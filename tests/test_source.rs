@@ -1,6 +1,8 @@
+#![cfg(feature = "std")]
+
 use std::error::Error as StdError;
 use std::io;
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[derive(Error, Debug)]
 #[error("implicit source")]

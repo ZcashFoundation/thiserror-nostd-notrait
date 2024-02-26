@@ -1,7 +1,7 @@
 #![allow(clippy::extra_unused_type_parameters)]
 
 use std::io;
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[derive(Error, Debug)]
 #[error("...")]

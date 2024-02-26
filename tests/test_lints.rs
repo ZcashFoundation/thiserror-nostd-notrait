@@ -1,4 +1,4 @@
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 pub use std::error::Error;
 

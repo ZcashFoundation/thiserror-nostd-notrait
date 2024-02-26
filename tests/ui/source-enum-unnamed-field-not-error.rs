@@ -1,4 +1,4 @@
-use thiserror::Error;
+use thiserror_nostd_notrait::Error;
 
 #[derive(Debug)]
 pub struct NotError;

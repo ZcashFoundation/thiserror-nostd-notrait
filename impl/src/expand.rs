@@ -1,11 +1,17 @@
 use crate::ast::{Enum, Field, Input, Struct};
 use crate::attr::Trait;
 use crate::generics::InferredBounds;
+#[cfg(feature = "std")]
 use crate::span::MemberSpan;
+extern crate alloc;
+use alloc::collections::BTreeSet as Set;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, quote_spanned, ToTokens};
-use std::collections::BTreeSet as Set;
-use syn::{DeriveInput, GenericArgument, Member, PathArguments, Result, Token, Type};
+#[cfg(feature = "std")]
+use quote::quote_spanned;
+use quote::{format_ident, quote, ToTokens};
+#[cfg(feature = "std")]
+use syn::Token;
+use syn::{DeriveInput, GenericArgument, Member, PathArguments, Result, Type};
 
 pub fn derive(input: &DeriveInput) -> TokenStream {
     match try_expand(input) {
@@ -55,8 +61,10 @@ fn fallback(input: &DeriveInput, error: syn::Error) -> TokenStream {
 fn impl_struct(input: Struct) -> TokenStream {
     let ty = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    #[cfg(feature = "std")]
     let mut error_inferred_bounds = InferredBounds::new();
 
+    #[cfg(feature = "std")]
     let source_body = if let Some(transparent_attr) = &input.attrs.transparent {
         let only_field = &input.fields[0];
         if only_field.contains_generic {
@@ -86,15 +94,17 @@ fn impl_struct(input: Struct) -> TokenStream {
     } else {
         None
     };
+    #[cfg(feature = "std")]
     let source_method = source_body.map(|body| {
         quote! {
             fn source(&self) -> ::core::option::Option<&(dyn std::error::Error + 'static)> {
-                use thiserror::__private::AsDynError as _;
+                use thiserror_nostd_notrait::__private::AsDynError as _;
                 #body
             }
         }
     });
 
+    #[cfg(feature = "std")]
     let provide_method = input.backtrace_field().map(|backtrace_field| {
         let request = quote!(request);
         let backtrace = &backtrace_field.member;
@@ -125,7 +135,7 @@ fn impl_struct(input: Struct) -> TokenStream {
                 })
             };
             quote! {
-                use thiserror::__private::ThiserrorProvide as _;
+                use thiserror_nostd_notrait::__private::ThiserrorProvide as _;
                 #source_provide
                 #self_provide
             }
@@ -202,13 +212,16 @@ fn impl_struct(input: Struct) -> TokenStream {
         }
     });
 
+    #[cfg(feature = "std")]
     if input.generics.type_params().next().is_some() {
         let self_token = <Token![Self]>::default();
         error_inferred_bounds.insert(self_token, Trait::Debug);
         error_inferred_bounds.insert(self_token, Trait::Display);
     }
+    #[cfg(feature = "std")]
     let error_where_clause = error_inferred_bounds.augment_where_clause(input.generics);
 
+    #[cfg(feature = "std")]
     quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics std::error::Error for #ty #ty_generics #error_where_clause {
@@ -218,13 +231,20 @@ fn impl_struct(input: Struct) -> TokenStream {
         #display_impl
         #from_impl
     }
+    #[cfg(not(feature = "std"))]
+    quote! {
+        #display_impl
+        #from_impl
+    }
 }
 
 fn impl_enum(input: Enum) -> TokenStream {
     let ty = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    #[cfg(feature = "std")]
     let mut error_inferred_bounds = InferredBounds::new();
 
+    #[cfg(feature = "std")]
     let source_method = if input.has_source() {
         let arms = input.variants.iter().map(|variant| {
             let ident = &variant.ident;
@@ -266,7 +286,7 @@ fn impl_enum(input: Enum) -> TokenStream {
         });
         Some(quote! {
             fn source(&self) -> ::core::option::Option<&(dyn std::error::Error + 'static)> {
-                use thiserror::__private::AsDynError as _;
+                use thiserror_nostd_notrait::__private::AsDynError as _;
                 #[allow(deprecated)]
                 match self {
                     #(#arms)*
@@ -277,6 +297,7 @@ fn impl_enum(input: Enum) -> TokenStream {
         None
     };
 
+    #[cfg(feature = "std")]
     let provide_method = if input.has_backtrace() {
         let request = quote!(request);
         let arms = input.variants.iter().map(|variant| {
@@ -316,7 +337,7 @@ fn impl_enum(input: Enum) -> TokenStream {
                             #source: #varsource,
                             ..
                         } => {
-                            use thiserror::__private::ThiserrorProvide as _;
+                            use thiserror_nostd_notrait::__private::ThiserrorProvide as _;
                             #source_provide
                             #self_provide
                         }
@@ -340,7 +361,7 @@ fn impl_enum(input: Enum) -> TokenStream {
                     };
                     quote! {
                         #ty::#ident {#backtrace: #varsource, ..} => {
-                            use thiserror::__private::ThiserrorProvide as _;
+                            use thiserror_nostd_notrait::__private::ThiserrorProvide as _;
                             #source_provide
                         }
                     }
@@ -458,19 +479,27 @@ fn impl_enum(input: Enum) -> TokenStream {
         })
     });
 
+    #[cfg(feature = "std")]
     if input.generics.type_params().next().is_some() {
         let self_token = <Token![Self]>::default();
         error_inferred_bounds.insert(self_token, Trait::Debug);
         error_inferred_bounds.insert(self_token, Trait::Display);
     }
+    #[cfg(feature = "std")]
     let error_where_clause = error_inferred_bounds.augment_where_clause(input.generics);
 
+    #[cfg(feature = "std")]
     quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics std::error::Error for #ty #ty_generics #error_where_clause {
             #source_method
             #provide_method
         }
+        #display_impl
+        #(#from_impls)*
+    }
+    #[cfg(not(feature = "std"))]
+    quote! {
         #display_impl
         #(#from_impls)*
     }
@@ -494,7 +523,7 @@ fn fields_pat(fields: &[Field]) -> TokenStream {
 fn use_as_display(needs_as_display: bool) -> Option<TokenStream> {
     if needs_as_display {
         Some(quote! {
-            use thiserror::__private::AsDisplay as _;
+            use thiserror_nostd_notrait::__private::AsDisplay as _;
         })
     } else {
         None
